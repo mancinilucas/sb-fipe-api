@@ -2,11 +2,15 @@ package com.acarajecorp.sbfipe.application;
 
 import com.acarajecorp.sbfipe.model.Data;
 import com.acarajecorp.sbfipe.model.Models;
+import com.acarajecorp.sbfipe.model.Vehicle;
 import com.acarajecorp.sbfipe.service.ConsumeAPI;
 import com.acarajecorp.sbfipe.service.ConvertData;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class Program {
     private Scanner sc = new Scanner(System.in);
@@ -57,5 +61,32 @@ public class Program {
         listModel.models().stream()
                 .sorted(Comparator.comparing(Data::carCode))
                 .forEach(System.out::println);
+
+        System.out.println("Informe o nome do carro para consulta: ");
+        var carName = sc.nextLine();
+        List<Data> filteredModels = listModel.models().stream()
+                .filter(m -> m.carName().toLowerCase().contains(carName.toLowerCase()))
+                .collect(Collectors.toList());
+
+        System.out.println("\nModelos filtrados: ");
+        filteredModels.forEach(System.out::println);
+
+        System.out.println("Digite o codigo do modelo para buscar os valores: ");
+        var modelCode = sc.nextLine();
+
+        apiUrl += "/" + modelCode + "/anos";
+        json = consumeAPI.getData(apiUrl);
+        List<Data> yearOfCarAvailable = converter.getList(json, Data.class);
+        List<Vehicle> vehicleList = new ArrayList<>();
+
+        for(int i = 0; i < yearOfCarAvailable.size(); i++){
+            var urlYear = apiUrl + "/" + yearOfCarAvailable.get(i).carCode();
+            json = consumeAPI.getData(urlYear);
+            Vehicle vehicle = converter.getData(json, Vehicle.class);
+            vehicleList.add(vehicle);
+        }
+
+        System.out.println("\nTodos os veículos filtrados com avaliações por ano: ");
+        vehicleList.forEach(System.out::println);
     }
 }
